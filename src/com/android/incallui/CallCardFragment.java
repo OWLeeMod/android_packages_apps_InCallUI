@@ -177,8 +177,7 @@ public class CallCardFragment extends BaseFragment<CallCardPresenter, CallCardPr
 
     @Override
     public void setPrimary(String number, String name, boolean nameIsNumber, String label,
-            Drawable photo, boolean isConference, boolean isGeneric,
-            boolean isSipCall, boolean isForwarded) {
+            Drawable photo, boolean isConference, boolean isGeneric, boolean isSipCall) {
         Log.d(this, "Setting primary call");
 
         if (isConference) {
@@ -195,7 +194,7 @@ public class CallCardFragment extends BaseFragment<CallCardPresenter, CallCardPr
         // Set the label (Mobile, Work, etc)
         setPrimaryLabel(label);
 
-        showCallTypeLabel(isSipCall, isForwarded);
+        showInternetCallLabel(isSipCall);
 
         setDrawableToImageView(mPhoto, photo);
     }
@@ -235,11 +234,11 @@ public class CallCardFragment extends BaseFragment<CallCardPresenter, CallCardPr
 
     @Override
     public void setCallState(int state, Call.DisconnectCause cause, boolean bluetoothOn,
-            String gatewayLabel, String gatewayNumber, boolean isHeldRemotely) {
+            String gatewayLabel, String gatewayNumber) {
         String callStateLabel = null;
 
         // States other than disconnected not yet supported
-        callStateLabel = getCallStateLabelFromState(state, cause, isHeldRemotely);
+        callStateLabel = getCallStateLabelFromState(state, cause);
 
         Log.v(this, "setCallState " + callStateLabel);
         Log.v(this, "DisconnectCause " + cause);
@@ -291,13 +290,12 @@ public class CallCardFragment extends BaseFragment<CallCardPresenter, CallCardPr
         }
     }
 
-    private void showCallTypeLabel(boolean isSipCall, boolean isForwarded) {
-        if (isSipCall) {
+    private void showInternetCallLabel(boolean show) {
+        if (show) {
+            final String label = getView().getContext().getString(
+                    R.string.incall_call_type_label_sip);
             mCallTypeLabel.setVisibility(View.VISIBLE);
-            mCallTypeLabel.setText(R.string.incall_call_type_label_sip);
-        } else if (isForwarded) {
-            mCallTypeLabel.setVisibility(View.VISIBLE);
-            mCallTypeLabel.setText(R.string.incall_call_type_label_forwarded);
+            mCallTypeLabel.setText(label);
         } else {
             mCallTypeLabel.setVisibility(View.GONE);
         }
@@ -362,8 +360,7 @@ public class CallCardFragment extends BaseFragment<CallCardPresenter, CallCardPr
      * Gets the call state label based on the state of the call and
      * cause of disconnect
      */
-    private String getCallStateLabelFromState(int state, Call.DisconnectCause cause,
-            boolean isHeldRemotely) {
+    private String getCallStateLabelFromState(int state, Call.DisconnectCause cause) {
         final Context context = getView().getContext();
         String callStateLabel = null;  // Label to display as part of the call banner
 
@@ -373,14 +370,11 @@ public class CallCardFragment extends BaseFragment<CallCardPresenter, CallCardPr
         } else if (Call.State.ACTIVE == state) {
             // We normally don't show a "call state label" at all in
             // this state (but see below for some special cases).
-            if (isHeldRemotely) {
-                callStateLabel = context.getString(R.string.card_title_waiting_call);
-            }
+
         } else if (Call.State.ONHOLD == state) {
             callStateLabel = context.getString(R.string.card_title_on_hold);
         } else if (Call.State.DIALING == state) {
-            callStateLabel = context.getString(isHeldRemotely
-                    ? R.string.card_title_dialing_waiting : R.string.card_title_dialing);
+            callStateLabel = context.getString(R.string.card_title_dialing);
         } else if (Call.State.REDIALING == state) {
             callStateLabel = context.getString(R.string.card_title_redialing);
         } else if (Call.State.INCOMING == state || Call.State.CALL_WAITING == state) {

@@ -150,7 +150,6 @@ public class CallCardPresenter extends Presenter<CallCardPresenter.CallCardUi>
         Log.d(this, "Secondary call: " + secondary);
 
         final boolean primaryChanged = !areCallsSame(mPrimary, primary);
-        final boolean primaryForwardedChanged = isForwarded(mPrimary) != isForwarded(primary);
         final boolean secondaryChanged = !areCallsSame(mSecondary, secondary);
         mSecondary = secondary;
         mPrimary = primary;
@@ -159,10 +158,8 @@ public class CallCardPresenter extends Presenter<CallCardPresenter.CallCardUi>
             // primary call has changed
             mPrimaryContactInfo = ContactInfoCache.buildCacheEntryFromCall(mContext,
                     mPrimary.getIdentification(), mPrimary.getState() == Call.State.INCOMING);
-            maybeStartSearch(mPrimary, true);
-        }
-        if ((primaryChanged || primaryForwardedChanged) && mPrimary != null) {
             updatePrimaryDisplayInfo(mPrimaryContactInfo, isConference(mPrimary));
+            maybeStartSearch(mPrimary, true);
         }
 
         if (mSecondary == null) {
@@ -192,10 +189,9 @@ public class CallCardPresenter extends Presenter<CallCardPresenter.CallCardUi>
             final boolean bluetoothOn =
                     (AudioModeProvider.getInstance().getAudioMode() == AudioMode.BLUETOOTH);
             ui.setCallState(mPrimary.getState(), mPrimary.getDisconnectCause(), bluetoothOn,
-                    getGatewayLabel(), getGatewayNumber(), mPrimary.isHeldRemotely());
+                    getGatewayLabel(), getGatewayNumber());
         } else {
-            ui.setCallState(Call.State.IDLE, Call.DisconnectCause.UNKNOWN,
-                    false, null, null, false);
+            ui.setCallState(Call.State.IDLE, Call.DisconnectCause.UNKNOWN, false, null, null);
         }
     }
 
@@ -205,7 +201,7 @@ public class CallCardPresenter extends Presenter<CallCardPresenter.CallCardUi>
             final boolean bluetoothOn = (AudioMode.BLUETOOTH == mode);
 
             getUi().setCallState(mPrimary.getState(), mPrimary.getDisconnectCause(), bluetoothOn,
-                    getGatewayLabel(), getGatewayNumber(), mPrimary.isHeldRemotely());
+                    getGatewayLabel(), getGatewayNumber());
         }
     }
 
@@ -294,10 +290,6 @@ public class CallCardPresenter extends Presenter<CallCardPresenter.CallCardUi>
         return call != null && call.can(Capabilities.GENERIC_CONFERENCE);
     }
 
-    private static boolean isForwarded(Call call) {
-        return call != null && call.isForwarded();
-    }
-
     private void updateContactEntry(ContactCacheEntry entry, boolean isPrimary,
             boolean isConference) {
         if (isPrimary) {
@@ -362,17 +354,14 @@ public class CallCardPresenter extends Presenter<CallCardPresenter.CallCardUi>
         }
 
         final boolean isGenericConf = isGenericConference(mPrimary);
-        final boolean isForwarded = isForwarded(mPrimary);
         if (entry != null) {
             final String name = getNameForCall(entry);
             final String number = getNumberForCall(entry);
             final boolean nameIsNumber = name != null && name.equals(entry.number);
             ui.setPrimary(number, name, nameIsNumber, entry.label,
-                    entry.photo, isConference, isGenericConf,
-                    entry.isSipCall, isForwarded);
+                    entry.photo, isConference, isGenericConf, entry.isSipCall);
         } else {
-            ui.setPrimary(null, null, false, null, null, isConference,
-                    isGenericConf, false, isForwarded);
+            ui.setPrimary(null, null, false, null, null, isConference, isGenericConf, false);
         }
 
     }
@@ -469,13 +458,12 @@ public class CallCardPresenter extends Presenter<CallCardPresenter.CallCardUi>
     public interface CallCardUi extends Ui {
         void setVisible(boolean on);
         void setPrimary(String number, String name, boolean nameIsNumber, String label,
-                Drawable photo, boolean isConference, boolean isGeneric,
-                boolean isSipCall, boolean isForwarded);
+                Drawable photo, boolean isConference, boolean isGeneric, boolean isSipCall);
         void setSecondary(boolean show, String name, boolean nameIsNumber, String label,
                 Drawable photo, boolean isConference, boolean isGeneric);
         void setSecondaryImage(Drawable image);
         void setCallState(int state, Call.DisconnectCause cause, boolean bluetoothOn,
-                String gatewayLabel, String gatewayNumber, boolean isHeldRemotely);
+                String gatewayLabel, String gatewayNumber);
         void setPrimaryCallElapsedTime(boolean show, String duration);
         void setPrimaryName(String name, boolean nameIsNumber);
         void setPrimaryImage(Drawable image);
